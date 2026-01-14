@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BurnIn_Temperature_simu"
-#define MyAppVersion "1.0.0.15"
+#define MyAppVersion "1.0.0.17"
 #define MyAppPublisher "Sinpro"
 #define MyAppExeName "BurnIn_Temperature_simu.exe"
 
@@ -44,4 +44,5 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait

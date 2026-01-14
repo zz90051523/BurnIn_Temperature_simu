@@ -24,6 +24,9 @@ namespace BurnIn_Temperature_simu
             AutoUpdaterDotNET.AutoUpdater.HttpUserAgent = "BurnIn_Temperature_simu";
             AutoUpdaterDotNET.AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             
+            // 註冊「檢查更新事件」，攔截預設視窗 (恢復此行以啟用客製化介面)
+            AutoUpdaterDotNET.AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
+            
             // 強制以管理員身分執行更新
             AutoUpdaterDotNET.AutoUpdater.RunUpdateAsAdmin = true;
 
