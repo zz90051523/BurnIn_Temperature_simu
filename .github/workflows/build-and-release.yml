@@ -27,11 +27,11 @@ jobs:
     - name: Build Solution
       run: msbuild BurnIn_Temperature_simu.sln /p:Configuration=Release /p:Platform="Any CPU"
 
+    - name: Install Inno Setup
+      run: choco install innosetup
+
     - name: Build Installer (Inno Setup)
-      uses: minhng97/inno-setup-action@v3.2
-      with:
-        path: setup.iss
-        # options: /DMyAppVersion=${{ github.ref_name }} # Optional: Pass version to Inno Setup (needs config)
+      run: "& 'C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe' setup.iss"
 
     - name: Move Installer to Releases folder
       run: |
