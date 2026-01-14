@@ -43,7 +43,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          Releases/Setup.exe
+          Releases/*.exe
           Releases/*.nupkg
           Releases/RELEASES
           Releases/releases*.json
