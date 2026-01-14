@@ -84,10 +84,15 @@ namespace BurnIn_Temperature_simu
                     DownloadURL = url,
                     Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false }
                 };
+                
+                // Debug: 顯示解析結果
+                // MessageBox.Show($"解析成功!\n版本: {version}\nURL: {url}", "Debug Info");
+                // TODO: 測試完成後請註解掉下面這行
+                MessageBox.Show($"[Debug] 解析成功!\nGitHub 版本: {version}\n下載網址: {url}", "Debug Info");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // 忽略錯誤
+                MessageBox.Show("更新檢查解析錯誤: " + ex.Message);
             }
         }
     }
