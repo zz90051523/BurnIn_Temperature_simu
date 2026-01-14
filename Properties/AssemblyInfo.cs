@@ -28,6 +28,6 @@ using System.Runtime.InteropServices;
 //      次要版本
 //      組建編號
 //      修訂編號
-// 0114 1.0.0.0
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+// 0114 1.0.0.1
+[assembly: AssemblyVersion("1.0.0.1")]
+[assembly: AssemblyFileVersion("1.0.0.1")]
