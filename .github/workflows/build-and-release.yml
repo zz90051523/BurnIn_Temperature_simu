@@ -27,6 +27,11 @@ jobs:
     - name: Build Solution
       run: msbuild BurnIn_Temperature_simu.sln /p:Configuration=Release /p:Platform="Any CPU"
 
+    - name: Debug - List Files
+      run: |
+        Get-ChildItem -Path . -Recurse
+        if (Test-Path "bin/Release") { Get-ChildItem -Path "bin/Release" } else { Write-Warning "bin/Release directory not found!" }
+
     - name: Install Inno Setup
       run: choco install innosetup
 
