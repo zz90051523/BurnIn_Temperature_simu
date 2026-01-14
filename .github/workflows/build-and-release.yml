@@ -32,18 +32,31 @@ jobs:
         Get-ChildItem -Path . -Recurse
         if (Test-Path "bin/Release") { Get-ChildItem -Path "bin/Release" } else { Write-Warning "bin/Release directory not found!" }
 
-    - name: Install Inno Setup
-      run: choco install innosetup
+    - name: Ensure Release Directory
+      run: if (!(Test-Path "Releases")) { New-Item -ItemType Directory -Force -Path "Releases" }
+
+    - name: Check Build Output
+      run: |
+        if (Test-Path "bin/Release/BurnIn_Temperature_simu.exe") { 
+            Write-Host "Main Executable found." 
+        } else { 
+            Write-Error "Main Executable NOT found in bin/Release!" 
+            Get-ChildItem -Path "bin" -Recurse
+            exit 1
+        }
 
     - name: Build Installer (Inno Setup)
-      run: "& 'C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe' setup.iss"
-
-    - name: Move Installer to Releases folder
       run: |
-        if (!(Test-Path "Releases")) { New-Item -ItemType Directory -Force -Path "Releases" }
-        # logic: setup.iss outputs to 'Releases/Setup.exe' directly as per OutputDir setting
-        # just verify it exists
-        if (Test-Path "Releases/Setup.exe") { Write-Host "Setup.exe created successfully." } else { Write-Error "Setup.exe not found." }
+        & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' setup.iss
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Check Installer Output
+      run: |
+        Get-ChildItem -Path "Releases"
+        if (!(Test-Path "Releases/Setup.exe")) { 
+            Write-Error "Setup.exe was NOT created!" 
+            exit 1
+        }
 
     - name: Create Release
       id: create_release
