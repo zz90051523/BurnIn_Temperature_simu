@@ -46,7 +46,16 @@ namespace BurnIn_Temperature_simu
         {
             try 
             {
+                // Debug: 進入解析事件
+                MessageBox.Show("[Debug] 收到 GitHub 回應，開始解析...", "Debug Info");
+
                 // 解析 GitHub API 回傳的 JSON
+                if (string.IsNullOrEmpty(args.RemoteData))
+                {
+                     MessageBox.Show("[Debug] GitHub 回傳資料為空!", "Error");
+                     return;
+                }
+
                 dynamic json = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<dynamic>(args.RemoteData);
                 
                 string version = json["tag_name"]; // e.g., "v1.0.4"
@@ -92,7 +101,7 @@ namespace BurnIn_Temperature_simu
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("更新檢查解析錯誤: " + ex.Message);
+                MessageBox.Show("更新檢查解析錯誤: " + ex.Message + "\n" + ex.StackTrace);
             }
         }
     }
