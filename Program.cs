@@ -14,42 +14,81 @@ namespace BurnIn_Temperature_simu
         [STAThread]
         static void Main()
         {
-            // [Velopack] 初始化：處理安裝、移除、更新等事件
-            // 這行必須放在 Main 的最前面
-            Velopack.VelopackApp.Build().Run();
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            // [AutoUpdater] 設定自動更新
             
-            // [Velopack] 背景檢查更新
-            System.Threading.Tasks.Task.Run(async () =>
+            // 重要：確保使用 TLS 1.2
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            
+            // 設定為 GitHub API 模式
+            AutoUpdaterDotNET.AutoUpdater.ReportErrors = true;
+            AutoUpdaterDotNET.AutoUpdater.HttpUserAgent = "BurnIn_Temperature_simu";
+            AutoUpdaterDotNET.AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
+            
+            // 啟用「稍後提醒」按鈕 (讓使用者可以選擇不立即更新)
+            AutoUpdaterDotNET.AutoUpdater.ShowRemindLaterButton = true;
+            
+            // 強制以管理員身分執行更新 (因為安裝檔通常需要 Admin 權限)
+            AutoUpdaterDotNET.AutoUpdater.RunUpdateAsAdmin = true;
+
+            // 設定 AutoUpdater Proxy
+            AutoUpdaterDotNET.AutoUpdater.Proxy = System.Net.WebRequest.DefaultWebProxy;
+            if (AutoUpdaterDotNET.AutoUpdater.Proxy != null)
             {
-                try
-                {
-                    // 使用 GitHub 作為更新來源
-                    // 注意：此處 URL 為您 GitHub Repo 的首頁
-                    var mgr = new Velopack.UpdateManager(new Velopack.Sources.GithubSource("https://github.com/zz90051523/BurnIn_Temperature_simu", null, false));
+                AutoUpdaterDotNET.AutoUpdater.Proxy.Credentials = System.Net.CredentialCache.DefaultCredentials;
+            }
 
-                    // 檢查是否有新版本
-                    var newVersion = await mgr.CheckForUpdatesAsync();
-                    if (newVersion != null)
-                    {
-                        // 下載更新
-                        await mgr.DownloadUpdatesAsync(newVersion);
-
-                        // 提示使用者或直接重啟套用 (這裡示範自動重啟並套用)
-                        // 若要提示使用者，可以用 Invoke 回到 UI Thread 跳出視窗
-                        mgr.ApplyUpdatesAndRestart(newVersion);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // 更新失敗，暫時忽略或紀錄 Log
-                    Console.WriteLine("Update failed: " + ex.ToString());
-                }
-            });
-
+            AutoUpdaterDotNET.AutoUpdater.Start("https://api.github.com/repos/zz90051523/BurnIn_Temperature_simu/releases/latest");
+            
             Application.Run(new BurnIn_Temperature_Simu());
+        }
+
+        private static void AutoUpdaterOnParseUpdateInfoEvent(AutoUpdaterDotNET.ParseUpdateInfoEventArgs args)
+        {
+            try 
+            {
+                // 解析 GitHub API 回傳的 JSON
+                dynamic json = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<dynamic>(args.RemoteData);
+                
+                string version = json["tag_name"]; // e.g., "v1.0.4"
+                if (version.StartsWith("v")) version = version.Substring(1); // 去掉 'v'
+                
+                string changelog = json["body"];
+                
+                // 取得第一個 asset (通常是 zip 檔，現在我們要抓 exe)
+                var assets = json["assets"] as Array;
+                string url = "";
+                if (assets != null && assets.Length > 0)
+                {
+                     // 尋找 .exe 結尾的 asset
+                     foreach (dynamic asset in assets)
+                     {
+                         string name = asset["name"];
+                         if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                         {
+                             url = asset["browser_download_url"];
+                             break;
+                         }
+                     }
+                     // 如果找不到 exe，回退到第一個 asset (可能是 zip)
+                     if (string.IsNullOrEmpty(url))
+                     {
+                         dynamic firstAsset = assets.GetValue(0);
+                         url = firstAsset["browser_download_url"];
+                     }
+                }
+
+                args.UpdateInfo = new AutoUpdaterDotNET.UpdateInfoEventArgs
+                {
+                    CurrentVersion = version,
+                    ChangelogURL = json["html_url"], // 使用 Release 頁面作為 Changelog
+                    DownloadURL = url,
+                    Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false }
+                };
+            }
+            catch (Exception)
+            {
+                // 忽略錯誤
+            }
         }
     }
 }
