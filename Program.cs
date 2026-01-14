@@ -37,7 +37,12 @@ namespace BurnIn_Temperature_simu
                 AutoUpdaterDotNET.AutoUpdater.Proxy.Credentials = System.Net.CredentialCache.DefaultCredentials;
             }
 
-            AutoUpdaterDotNET.AutoUpdater.Start("https://api.github.com/repos/zz90051523/BurnIn_Temperature_simu/releases/latest");
+            // 設定 Silent Install 參數 (直接覆蓋，不顯示安裝精靈)
+            // /SILENT: 顯示進度條但無精靈
+            // /SP-: 跳過 "是否安裝" 的確認視窗
+            // /CLOSEAPPLICATIONS: 自動關閉佔用檔案的程式
+            // /RESTARTAPPLICATIONS: 更新後自動重啟
+            AutoUpdaterDotNET.AutoUpdater.InstallerArgs = "/SILENT /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS";
             
             Application.Run(new BurnIn_Temperature_Simu());
         }
