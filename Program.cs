@@ -20,14 +20,14 @@ namespace BurnIn_Temperature_simu
             System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
             
             // 設定為 GitHub API 模式
-            AutoUpdaterDotNET.AutoUpdater.ReportErrors = true;
+            AutoUpdaterDotNET.AutoUpdater.ReportErrors = false; // 關閉預設錯誤視窗，改由 Event 自行處理 (如果有需要)
             AutoUpdaterDotNET.AutoUpdater.HttpUserAgent = "BurnIn_Temperature_simu";
             AutoUpdaterDotNET.AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             
-            // 啟用「稍後提醒」按鈕 (讓使用者可以選擇不立即更新)
-            AutoUpdaterDotNET.AutoUpdater.ShowRemindLaterButton = true;
+            // 註冊「檢查更新事件」，攔截預設視窗
+            AutoUpdaterDotNET.AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             
-            // 強制以管理員身分執行更新 (因為安裝檔通常需要 Admin 權限)
+            // 強制以管理員身分執行更新
             AutoUpdaterDotNET.AutoUpdater.RunUpdateAsAdmin = true;
 
             // 設定 AutoUpdater Proxy
@@ -42,43 +42,59 @@ namespace BurnIn_Temperature_simu
             Application.Run(new BurnIn_Temperature_Simu());
         }
 
+        private static void AutoUpdaterOnCheckForUpdateEvent(AutoUpdaterDotNET.UpdateInfoEventArgs args)
+        {
+            if (args.Error != null)
+            {
+                // 如果是網路錯誤，可以選擇忽略或記錄 log，這裡先暫時不跳視窗打擾使用者
+                // MessageBox.Show("更新檢查失敗: " + args.Error.Message);
+                return;
+            }
+
+            if (args.IsUpdateAvailable)
+            {
+                // 有更新！顯示我們的客製化視窗
+                UpdateForm updateForm = new UpdateForm(args);
+                if (updateForm.ShowDialog() == DialogResult.OK)
+                {
+                    // 使用者點選 "Update Now"
+                    if (AutoUpdaterDotNET.AutoUpdater.DownloadUpdate(args))
+                    {
+                        Application.Exit();
+                    }
+                }
+            }
+            else
+            {
+                // 沒有更新，什麼都不做 (靜默模式)
+            }
+        }
+
         private static void AutoUpdaterOnParseUpdateInfoEvent(AutoUpdaterDotNET.ParseUpdateInfoEventArgs args)
         {
             try 
             {
-                // Debug: 進入解析事件
-                MessageBox.Show("[Debug] 收到 GitHub 回應，開始解析...", "Debug Info");
-
-                // 解析 GitHub API 回傳的 JSON
-                if (string.IsNullOrEmpty(args.RemoteData))
-                {
-                     MessageBox.Show("[Debug] GitHub 回傳資料為空!", "Error");
-                     return;
-                }
+                if (string.IsNullOrEmpty(args.RemoteData)) return;
 
                 dynamic json = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<dynamic>(args.RemoteData);
                 
-                string version = json["tag_name"]; // e.g., "v1.0.4"
-                if (version.StartsWith("v")) version = version.Substring(1); // 去掉 'v'
+                string version = json["tag_name"]; 
+                if (version.StartsWith("v")) version = version.Substring(1);
                 
-                string changelog = json["body"];
+                string changelog = json["body"]; // 或 json["html_url"]
                 
-                // 取得第一個 asset (通常是 zip 檔，現在我們要抓 exe)
                 var assets = json["assets"] as Array;
                 string url = "";
                 if (assets != null && assets.Length > 0)
                 {
-                     // 尋找 .exe 結尾的 asset
                      foreach (dynamic asset in assets)
                      {
-                         string name = asset["name"];
-                         if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                         if (asset["name"].EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                          {
                              url = asset["browser_download_url"];
                              break;
                          }
                      }
-                     // 如果找不到 exe，回退到第一個 asset (可能是 zip)
                      if (string.IsNullOrEmpty(url))
                      {
                          dynamic firstAsset = assets.GetValue(0);
@@ -89,19 +105,14 @@ namespace BurnIn_Temperature_simu
                 args.UpdateInfo = new AutoUpdaterDotNET.UpdateInfoEventArgs
                 {
                     CurrentVersion = version,
-                    ChangelogURL = json["html_url"], // 使用 Release 頁面作為 Changelog
+                    ChangelogURL = json["body"], // 這裡改用 body (Release Note 文字) 讓介面顯示
                     DownloadURL = url,
                     Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false }
                 };
-                
-                // Debug: 顯示解析結果
-                 //MessageBox.Show($"解析成功!\n版本: {version}\nURL: {url}", "Debug Info");
-                // TODO: 測試完成後請註解掉下面這行
-                MessageBox.Show($"[Debug] 解析成功!\nGitHub 版本: {version}\n下載網址: {url}", "Debug Info");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show("更新檢查解析錯誤: " + ex.Message + "\n" + ex.StackTrace);
+                // 解析失敗忽略
             }
         }
     }
