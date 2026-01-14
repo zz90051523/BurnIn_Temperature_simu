@@ -27,7 +27,7 @@ jobs:
 
     - name: Create Zip Archive
       run: |
-        $source = "BurnIn_Temperature_simu/bin/Release/*"
+        $source = "bin/Release/*"
         $destination = "BurnIn_Temperature_simu.zip"
         Compress-Archive -Path $source -DestinationPath $destination
 
