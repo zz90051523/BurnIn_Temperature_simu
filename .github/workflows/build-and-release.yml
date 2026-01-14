@@ -27,16 +27,27 @@ jobs:
     - name: Build Solution
       run: msbuild BurnIn_Temperature_simu.sln /p:Configuration=Release /p:Platform="Any CPU"
 
-    - name: Create Zip Archive
+    - name: Install Velopack CLI
+      run: dotnet tool install -g vpk
+
+    - name: Create Release Package (vpk)
       run: |
-        $source = "bin/Release/*"
-        $destination = "BurnIn_Temperature_simu.zip"
-        Compress-Archive -Path $source -DestinationPath $destination
+        # 取得版本號 (去掉 v)
+        $version = "${{ env.VERSION }}".Substring(1)
+        # 使用 vpk 打包
+        # packId 必須與專案名稱一致 (或自訂)，但後續 UpdateManager 要對應
+        # packDir 指向編譯輸出目錄
+        vpk pack --packId "BurnIn_Temperature_simu" --packVersion $version --packDir "bin/Release" --mainExe "BurnIn_Temperature_simu.exe"
 
     - name: Create Release
+      id: create_release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: BurnIn_Temperature_simu.zip
+        files: |
+          Releases/Setup.exe
+          Releases/*.nupkg
+          Releases/RELEASES
+          Releases/releases*.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
