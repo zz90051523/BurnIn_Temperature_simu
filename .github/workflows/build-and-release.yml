@@ -1,0 +1,40 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0
+
+    - name: Restore NuGet packages
+      run: nuget restore BurnIn_Temperature_simu.sln
+
+    - name: Build Solution
+      run: msbuild BurnIn_Temperature_simu.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Create Zip Archive
+      run: |
+        $source = "BurnIn_Temperature_simu/bin/Release/*"
+        $destination = "BurnIn_Temperature_simu.zip"
+        Compress-Archive -Path $source -DestinationPath $destination
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: BurnIn_Temperature_simu.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
