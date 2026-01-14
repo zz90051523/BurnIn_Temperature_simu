@@ -18,10 +18,9 @@ namespace BurnIn_Temperature_simu
             Application.SetCompatibleTextRenderingDefault(false);
 
             // [AutoUpdater] 設定自動更新
-            // 請確保 AutoUpdaterDotNET 套件已安裝 (NuGet: AutoUpdater.NET.Official)
-             AutoUpdaterDotNET.AutoUpdater.Start("https://raw.githubusercontent.com/zz90051523/BurnIn_Temperature_simu/master/update.xml");
-
-
+            // 指向 GitHub 上的 update.xml
+            AutoUpdaterDotNET.AutoUpdater.Start("https://raw.githubusercontent.com/zz90051523/BurnIn_Temperature_simu/master/update.xml");
+            
             Application.Run(new BurnIn_Temperature_Simu());
         }
     }
