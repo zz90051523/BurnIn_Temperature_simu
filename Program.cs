@@ -98,7 +98,7 @@ namespace BurnIn_Temperature_simu
                 args.UpdateInfo = new AutoUpdaterDotNET.UpdateInfoEventArgs
                 {
                     CurrentVersion = version,
-                    ChangelogURL = json["body"], // 這裡改用 body (Release Note 文字) 讓介面顯示
+                    ChangelogURL = string.IsNullOrWhiteSpace(json["body"]) ? "No release notes available." : json["body"], // 這裡改用 body (Release Note 文字) 讓介面顯示
                     DownloadURL = url,
                     Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false },
                     InstallerArgs = "/VERYSILENT /SP- /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS" // 強制完全靜默安裝
