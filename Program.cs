@@ -24,9 +24,6 @@ namespace BurnIn_Temperature_simu
             AutoUpdaterDotNET.AutoUpdater.HttpUserAgent = "BurnIn_Temperature_simu";
             AutoUpdaterDotNET.AutoUpdater.ParseUpdateInfoEvent += AutoUpdaterOnParseUpdateInfoEvent;
             
-            // 註冊「檢查更新事件」，攔截預設視窗
-            AutoUpdaterDotNET.AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
-            
             // 強制以管理員身分執行更新
             AutoUpdaterDotNET.AutoUpdater.RunUpdateAsAdmin = true;
 
@@ -37,12 +34,7 @@ namespace BurnIn_Temperature_simu
                 AutoUpdaterDotNET.AutoUpdater.Proxy.Credentials = System.Net.CredentialCache.DefaultCredentials;
             }
 
-            // 設定 Silent Install 參數 (直接覆蓋，不顯示安裝精靈)
-            // /SILENT: 顯示進度條但無精靈
-            // /SP-: 跳過 "是否安裝" 的確認視窗
-            // /CLOSEAPPLICATIONS: 自動關閉佔用檔案的程式
-            // /RESTARTAPPLICATIONS: 更新後自動重啟
-            AutoUpdaterDotNET.AutoUpdater.InstallerArgs = "/SILENT /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS";
+            AutoUpdaterDotNET.AutoUpdater.Start("https://api.github.com/repos/zz90051523/BurnIn_Temperature_simu/releases/latest");
             
             Application.Run(new BurnIn_Temperature_Simu());
         }
@@ -51,27 +43,20 @@ namespace BurnIn_Temperature_simu
         {
             if (args.Error != null)
             {
-                // 如果是網路錯誤，可以選擇忽略或記錄 log，這裡先暫時不跳視窗打擾使用者
-                // MessageBox.Show("更新檢查失敗: " + args.Error.Message);
+                // 如果是網路錯誤，可以選擇忽略或記錄 log
                 return;
             }
 
             if (args.IsUpdateAvailable)
             {
-                // 有更新！顯示我們的客製化視窗
                 UpdateForm updateForm = new UpdateForm(args);
                 if (updateForm.ShowDialog() == DialogResult.OK)
                 {
-                    // 使用者點選 "Update Now"
                     if (AutoUpdaterDotNET.AutoUpdater.DownloadUpdate(args))
                     {
                         Application.Exit();
                     }
                 }
-            }
-            else
-            {
-                // 沒有更新，什麼都不做 (靜默模式)
             }
         }
 
@@ -112,7 +97,8 @@ namespace BurnIn_Temperature_simu
                     CurrentVersion = version,
                     ChangelogURL = json["body"], // 這裡改用 body (Release Note 文字) 讓介面顯示
                     DownloadURL = url,
-                    Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false }
+                    Mandatory = new AutoUpdaterDotNET.Mandatory { Value = false },
+                    InstallerArgs = "/SILENT /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS" // 在這裡設定靜默安裝參數
                 };
             }
             catch (Exception)
